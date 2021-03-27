@@ -1,0 +1,440 @@
+//.h
+#include<iostream>
+#include<assert.h>
+using namespace std;
+
+
+namespace myString
+{
+	class string
+	{
+	public:
+		//iterator
+		typedef char* iterator;
+		iterator begin();
+		iterator end();
+		//默认构造
+		string(const char* str = "");
+		//拷贝构造
+		string(const string& s);
+		void swap(string& s1);
+		//赋值运算符重载
+		//string& operator=(const string& s);
+		string& operator=(myString::string s);
+		//析构函数
+		~string();
+
+		//[]重载
+		char& operator[](size_t pos);
+		//
+		void reserve(size_t n);
+		void resize(size_t n,char ch = '\0');
+		size_t size();
+		size_t capacity();
+		//插入
+		void push_back(const char ch);
+		void insert(size_t pos,const char ch);
+		void insert(size_t pos,const char* str);
+		void append(const char* str);
+		void operator+=(const char ch);
+		void operator+=(const char* str);
+		//查找
+		size_t find(char ch, size_t pos = 0);
+		size_t find(char* str, size_t pos = 0);
+		//转换成c字符串
+		const char* c_str() const;
+	private:
+		char* _str;
+		size_t _size;
+		size_t _capacity;
+	public:
+		const static size_t npos;
+	};
+	ostream& operator<<(ostream& _cout,myString::string s);
+	istream& operator>>(istream& _cin, myString::string s);
+	bool operator>(myString::string& s1, myString::string& s2);
+	bool operator==(myString::string& s1, myString::string& s2);
+	bool operator>=(myString::string& s1, myString::string& s2);
+	bool operator<=(myString::string& s1, myString::string& s2);
+	bool operator!=(myString::string& s1, myString::string& s2);
+};
+//string.cpp
+#include"string.h"
+
+const size_t myString::string::npos = -1;
+
+//默认构造函数
+myString::string::string(const char* str)
+{
+	//不能使用nullptr床架对象
+	assert(str != nullptr);
+	_str = new char[strlen(str) + 1];
+	_size = _capacity = strlen(str);
+	strcpy(_str,str);
+}
+//拷贝构造函数-现代写法
+//myString::string::string(const string& s)
+//:_str(nullptr)
+//, _size(0)
+//, _capacity(0)
+//{
+//	string tmp(s._str);
+//	swap(tmp);
+//}
+
+//拷贝构造-传统写法
+myString::string::string(const string& s)
+{
+	_str = new char[strlen(s._str) + 1];
+	strcpy(_str,s._str);
+	_size = _capacity = strlen(s._str);
+}
+
+//析构函数
+myString::string::~string()
+{
+	delete[] _str;
+	_size = _capacity = 0;
+	_str = nullptr;
+}
+
+//赋值运算符重载-传统写法
+//myString::string& myString::string::operator=(const string& s)
+//{
+//	if (this != &s)
+//	{
+//		//开辟新空间
+//		char* tmp = new char[strlen(s._str) + 1];
+//		strcpy(tmp, s._str);
+//		_size = _capacity = s._size;
+//		//释放原空间
+//		delete[] _str;
+//		_str = tmp;
+//	}
+//	return *this;
+//}
+
+//赋值运算符重载-现代写法
+myString::string& myString::string::operator=(myString::string s)
+{
+	swap(s);
+	return *this;
+}
+//[]重载
+char& myString::string::operator[](size_t pos)
+{
+	assert(pos < _size);
+	return _str[pos];
+}
+//交换两个字符串对象
+void myString::string::swap(string& s1)
+{
+	std::swap(_str, s1._str);
+	std::swap(_size,s1._size);
+	std::swap(_capacity,s1._capacity);
+}
+
+void myString::string::reserve(size_t n)
+{
+	if (n > _capacity)
+	{
+		char* tmp = new char[n+1];
+		strcpy(tmp,_str);
+		delete[] _str;
+		_str = tmp;
+		_capacity = n;
+	}
+}
+
+void myString::string::resize(size_t n, char ch)
+{
+	if (n < _size)
+	{
+		_str[_size] = '\0';
+		_size = n;
+	}
+	else
+	{
+		if (n > _capacity)
+		{
+			reserve(n);
+		}
+		//后边补ch
+		for (size_t i = _size; i < n; i++)
+			_str[i] = ch;
+		//加'\0'
+		_str[n] = '\0';
+		_size = n;
+	}
+}
+
+size_t myString::string::size()
+{
+	return _size;
+}
+size_t myString::string::capacity()
+{
+	return _capacity;
+}
+
+myString::string::iterator myString::string::begin()
+{
+	return _str;
+}
+myString::string::iterator myString::string::end()
+{
+	return _str + _size;
+}
+
+void myString::string::insert(size_t pos,const char ch)
+{
+	//检查插入位置是否正确
+	assert(pos <= _size);
+	//判断是否需要扩容
+	if (_capacity == 0)
+		reserve(10);
+	else if (_capacity == _size)
+		reserve(2*_capacity);
+	//将size及其之后的字符后移
+	for (size_t i = _size; i >= pos; i--)
+	{
+		_str[i+1] = _str[i];
+	}
+	//pos位置插入字符
+	_str[pos] = ch;
+	_size++;
+}
+
+void myString::string::insert(size_t pos, const char* str)
+{
+	int len = strlen(str);
+	//检查插入位置是否正确
+	assert(pos <= _size);
+	//判断是否需要扩容
+	if (_capacity == 0)
+		reserve(len);
+	else if (_capacity == _size)
+		reserve(_size+len);
+	//移动size之后的字符
+	for (size_t i = _size; i >= pos; i--)
+	{
+		_str[i+len] = _str[i];
+	}
+	//插入字符串
+	strncpy(_str+pos,str,len);
+	_size += len;
+}
+
+void myString::string::push_back(const char ch)
+{
+	insert(_size,ch);
+}
+
+void myString::string::append(const char* str)
+{
+	insert(_size,str);
+}
+
+void myString::string::operator+=(const char ch)
+{
+	push_back(ch);
+}
+void myString::string::operator+=(const char* str)
+{
+	append(str);
+}
+
+size_t myString::string::find(char ch, size_t pos)
+{
+	assert(pos < _size);
+	for (size_t i = 0; i < _size; i++)
+	{
+		if (_str[i] == ch)
+			return i;
+	}
+	return npos;
+}
+size_t myString::string::find(char* str, size_t pos)
+{
+	const char* ret = strstr(_str + pos, str);
+	if (ret == nullptr)
+	{
+		return npos;
+	}
+	else
+	{
+		return ret - _str;
+	}
+}
+
+const char* myString::string::c_str() const
+{
+	return _str;
+}
+
+ostream& myString::operator<<(ostream& _cout,myString::string s)
+{
+	for (size_t i = 0; i < s.size(); i++)
+	{
+		_cout << s[i];
+	}
+	_cout << endl;
+	return _cout;
+}
+istream& myString::operator>>(istream& _cin, myString::string s)
+{
+	s.resize(0);
+	char ch;
+	while (1)
+	{
+		//in>>ch;
+		_cin.get(ch);
+		if (ch == ' ' || ch == '\n')
+		{
+			break;
+		}
+		else
+		{
+			s += ch;
+		}
+	}
+
+	return _cin;
+}
+
+bool myString::operator>(myString::string& s1, myString::string& s2)
+{
+	size_t i1 = 0, i2 = 0;
+	while (i1 < s1.size() && i2 < s2.size())
+	{
+		if (s1[i1] > s2[i2])
+		{
+			return true;
+		}
+		else if (s1[i1] < s2[i2])
+		{
+			return false;
+		}
+		else
+		{
+			++i1;
+			++i2;
+		}
+	}
+
+	if (i1 < s1.size())
+	{
+		return true;
+	}
+	else if (i2 < s2.size())
+	{
+		return false;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool myString::operator==(myString::string& s1, myString::string& s2)
+{
+	size_t i1 = 0, i2 = 0;
+	while (i1 < s1.size() && i2 < s2.size())
+	{
+		if (s1[i1] > s2[i2])
+		{
+			return false;
+		}
+		else if (s1[i1] < s2[i2])
+		{
+			return false;
+		}
+		else
+		{
+			++i1;
+			++i2;
+		}
+	}
+
+	if (i1 == s1.size() && i2 == s2.size())
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool myString::operator>=(myString::string& s1, myString::string& s2)
+{
+	if (s1 > s2 || s1 == s2)
+		return true;
+	return false;
+}
+
+bool myString::operator<=(myString::string& s1, myString::string& s2)
+{
+	if (s1 > s2)
+		return false;
+	return true;
+}
+
+bool myString::operator!=(myString::string& s1, myString::string& s2)
+{
+	if (s1 == s2)
+		return false;
+	return true;
+}
+
+//test.cpp
+#include"string.h"
+
+int main()
+{
+	//测试默认构造函数
+	myString::string s1;
+	//myString::string s2 = NULL;
+	myString::string s3 = "hello world";
+
+	//测试拷贝构造
+	myString::string s4(s3);
+
+	//赋值运算符重载
+	myString::string s5("hello");
+	s5 = s4;
+	//[]重载
+	cout << s5[6] << endl;
+	//reserve和resize
+	//reserve在插入的时候会调用
+	myString::string s6;
+	s6.resize(5,'x');
+	//size和capacity
+	cout << s6.size() << " " << s6.capacity() << endl;//均为5
+
+	//iterator
+	myString::string::iterator it = s6.begin();
+	while (it < s6.end())
+	{
+		cout << *it << " ";
+		it++;
+	}
+	cout << endl;
+
+	//插入
+	myString::string s7("helloworld");
+	s7.insert(5,' ');
+	s7.push_back('!');
+	myString::string s8("12345678");
+	s8.insert(2,"hello");
+	s8.append("world!");
+	//输出
+	cout << s8;
+
+	cout << (s7 == s8) << endl;
+
+	myString::string s10 = "hello";
+	myString::string s11 = "aellobbb";
+	cout << (s10 > s11) << endl;
+	return 0;
+}
