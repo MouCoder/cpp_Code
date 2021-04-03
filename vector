@@ -1,0 +1,152 @@
+#include<iostream>
+#include<string.h>
+#include<assert.h>
+using namespace std;
+
+namespace myvector
+{
+	template<class T>
+	class vector
+	{
+	public:
+		typedef T* iterator;
+
+		iterator begin()
+		{
+			return start;
+		}
+
+		iterator end()
+		{
+			return finish;
+		}
+
+		//默认构造函数
+		vector()
+			:start(nullptr)
+			, finish(nullptr)
+			, end_of_storage(nullptr)
+		{}
+		//容量
+		size_t capacity()
+		{
+			return end_of_storage - start;
+		}
+
+		size_t size()
+		{
+			return finish - start;
+		}
+
+		void reserve(size_t n)
+		{
+			if (n > capacity())
+			{
+				//开新空间
+				T* tmp = new T[n];
+				//拷贝旧空间的内容
+				memcpy(tmp, start, sizeof(T)*size());
+				//改变容量
+				finish = tmp + size();
+				end_of_storage = tmp + n;
+				//释放旧空间
+				T* tmp1 = start;
+				start = tmp;
+				tmp = nullptr;
+			}
+		}
+
+		void resize(size_t n, const T& val = T())
+		{
+			//判断容量
+			if (n > capacity())
+				reserve(n);
+			//如果n<size
+			if (n < size())
+			{
+				finish = start + n;
+			}
+			else
+			{
+				while (finish != start + n)
+				{
+					*finish = val;
+					finish++;
+				}
+			}
+		}
+		//检查空间
+		void check_capacity()
+		{
+			if (finish == end_of_storage)
+			{
+				//如果当前不为空，就扩2倍，为空就开4个吧
+				size_t newcapacity = finish == nullptr ? 4 : capacity()*2;
+				reserve(newcapacity);
+			}
+		}
+
+		T& operator[](size_t pos)
+		{
+			assert(pos < size());
+			return start[pos];
+		}
+		
+		//插入
+		void push_back(const T& x)
+		{
+			insert(finish,x);
+		}
+
+		iterator insert(iterator pos, const T& x)
+		{
+			assert(pos >= start && pos <= finish);
+			size_t pos1 = pos - start;
+			check_capacity();
+			//解决迭代器失效
+			pos = start + pos1;
+			//移动数据
+			iterator end = finish;
+			while (end >= pos)
+			{
+				*(end + 1) = *end;
+				end--;
+			}
+			//插入数据
+			*pos = x;
+			finish++;
+			return pos;
+		}
+
+		//删除数据
+		void pop_back()
+		{
+			assert(finish > start);
+			finish--;
+		}
+		iterator erase(iterator pos)
+		{
+			assert(pos >= start && pos < finish);
+
+			iterator it = pos + 1;
+			while (it != finish)
+			{
+				*(it - 1) = *it;
+				++it;
+			}
+			--finish;
+
+			return pos;
+		}
+		//析构函数
+		~vector()
+		{
+			delete[] start;
+			start = finish = end_of_storage = nullptr;
+		}
+	private:
+		iterator start;
+		iterator finish;
+		iterator end_of_storage;
+	};
+}
