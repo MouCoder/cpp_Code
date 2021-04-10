@@ -1,0 +1,58 @@
+//list迭代器的实现
+	//Ref->T&   ptr->T*
+	template<class T, class Ref, class Ptr>
+	struct __list_iterator
+	{
+		typedef __list_node<T> node;
+		typedef __list_iterator<T, Ref, Ptr> self;
+		node* _node;
+
+		//迭代器的作用不是创建节点而是指向原有节点，因此使用指针即可
+		__list_iterator(node* node)
+			:_node(node)
+		{}
+		//list迭代器中不用实现拷贝构造、赋值运算符重载、析构，因为迭代器的本质并不是创建节点，使用默认的进行值拷贝即可。
+		bool operator!=(const self& s) const  //不需要进行修改，设计成const无论是const和非const都可以调用
+		{
+			return _node != s._node;
+		}
+		bool operator==(const self& s) const
+		{
+			return _node == s._node;
+		}
+		//重载->
+		Ptr operator->()  const
+		{
+			return &_node->data;
+		}
+		Ref operator*() const
+		{
+			return _node->data;
+		}
+		//前置++
+		self operator++()
+		{
+			_node = _node->next;//直接返回++后的结果
+			return *this;
+		}
+		//后置++
+		self operator++(int) //参数只是为了和前置构成重载，并没有实际意义，因此只给类型就可以了
+		{
+			self tmp = *this;
+			_node = _node->next;
+			return tmp;
+		}
+		//前置--
+		self operator--()
+		{
+			_node = _node->next;
+			return *this;
+		}
+		//后置--
+		self operator--(int)
+		{
+			self tmp = *this;
+			_node = _node->next;
+			return tmp;
+		}
+	};
