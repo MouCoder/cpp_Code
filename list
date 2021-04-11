@@ -1,0 +1,220 @@
+#include<iostream>
+#include<list>
+#include<assert.h>
+#include<vector>
+using namespace std;
+
+namespace MyList
+{
+	template<class T>
+	//模板的使用_list_node<type>
+	struct __list_node
+	{
+		__list_node<T>* prev;//指向后一个节点的指针
+		__list_node<T>* next;//指向前一个节点的指针
+		T data;//数据域
+
+		//node的默认构造函数，对成员变量进行初始化。T()表示调用默认构造函数，即x会调用默认构造函数
+		__list_node(const T& x = T())
+			:prev(nullptr)
+			, next(nullptr)
+			, data(x)
+		{}
+	};
+
+	//list迭代器的实现
+	//Ref->T&   ptr->T*
+	template<class T, class Ref, class Ptr>
+	struct __list_iterator
+	{
+		typedef __list_node<T> node;
+		typedef __list_iterator<T, Ref, Ptr> self;
+		node* _node;
+
+		//迭代器的作用不是创建节点而是指向原有节点，因此使用指针即可
+		__list_iterator(node* node)
+			:_node(node)
+		{}
+		//list迭代器中不用实现拷贝构造、赋值运算符重载、析构，因为迭代器的本质并不是创建节点，使用默认的进行值拷贝即可。
+		bool operator!=(const self& s) const  //不需要进行修改，设计成const无论是const和非const都可以调用
+		{
+			return _node != s._node;
+		}
+		bool operator==(const self& s) const
+		{
+			return _node == s._node;
+		}
+		//重载->
+		Ptr operator->()  const
+		{
+			return &_node->data;
+		}
+		Ref operator*() const
+		{
+			return _node->data;
+		}
+		//前置++
+		self operator++()
+		{
+			_node = _node->next;//直接返回++后的结果
+			return *this;
+		}
+		//后置++
+		self operator++(int) //参数只是为了和前置构成重载，并没有实际意义，因此只给类型就可以了
+		{
+			self tmp = *this;
+			_node = _node->next;
+			return tmp;
+		}
+		//前置--
+		self operator--()
+		{
+			_node = _node->prev;
+			return *this;
+		}
+		//后置--
+		self operator--(int)
+		{
+			self tmp = *this;
+			_node = _node->prev;
+			return tmp;
+		}
+	};
+
+	template<class T>
+	class list
+	{
+		typedef __list_node<T> node;
+	public:
+		typedef __list_iterator<T, T&, T*> iterator;
+		typedef __list_iterator<T, const T&, const T*> const_iterator;
+		//迭代器
+		iterator begin()
+		{
+			return iterator(head->next);//调用iterator的构造函数，将node*转换成iterator类型
+		}
+		iterator end()
+		{
+			return iterator(head);
+		}
+		const_iterator begin() const
+		{
+			return head->next;
+		}
+		const_iterator end() const 
+		{
+			return head;
+		}
+		/*构造函数*/
+		//默认构造
+		list()
+		{
+			head = new node;
+			//下一个节点指针和前一个节点指针都指向自身的空链表
+			head->next = head;
+			head->prev = head;
+		}
+		template<class InputIterator>
+		list(InputIterator first, InputIterator last)
+		{
+			head = new node;
+			head->next =head;
+			head->prev = head;
+
+			//调用push_back插入first到last的节点
+			while (first != last)
+			{
+				push_back(*first);
+				++first;
+			}
+		}
+		list(const list<T>& lt)
+		{
+			head = new node;
+			head->next = head;
+			head->prev = head;
+
+			list<T> tmp(lt.begin(), lt.end());
+			std::swap(head, tmp.head);
+		}
+		//lt1 = lt2
+		list<T>& operator=(list<T> lt)
+		{
+			//传值会进行临时拷贝，lt就是一个新的list,将lt和this->head交换，函数结束释放空间就将this->head释放而新的this->head=lt.head
+			std::swap(head, lt.head);
+			return *this;
+		}
+		//析构函数
+		~list()
+		{
+			clear();
+			delete head;
+			head = nullptr;
+		}
+		/*插入*/
+		//尾插
+		void push_back(const T& x)
+		{
+			insert(end(),x);
+			//node* newnode = new node(x);
+			////插入节点
+			//node* tail = head->prev;
+			//tail->next = newnode;
+			//newnode->next = head;
+			//newnode->prev = tail;
+			//head->prev = newnode;
+		}
+		void push_front(const T& x)
+		{
+			insert(begin(),x);
+		}
+		iterator insert(iterator pos,const T& x)
+		{
+			node* newnode = new node(x);
+			node* cur = pos._node;
+			node* prev = cur->prev;
+			newnode->next = cur;
+			newnode->prev = prev;
+			prev->next = newnode;
+			cur->prev = newnode;
+
+			return iterator(newnode);
+		}
+		/*删除*/
+		void clear()
+		{
+			iterator it = begin();
+			while (it != end())
+			{
+				erase(it++);
+			}
+		}
+		iterator erase(iterator pos)
+		{
+			assert(pos != end());
+
+			node* cur = pos._node;
+			node* prev = cur->prev;
+			node* next = cur->next;
+			
+			next->prev = prev;
+			prev->next = next;
+			delete cur;
+			return iterator(next);
+		}
+		void pop_back()
+		{
+			assert(head->prev != head);
+			erase(--end());
+		}
+		void pop_fornt()
+		{
+			assert(head->prev != head);
+			erase(begin());
+		}
+		
+	private:
+		//双向带头循环链表
+		node* head;
+	};
+}
