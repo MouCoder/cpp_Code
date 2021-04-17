@@ -1,0 +1,120 @@
+namespace myPriorityQueue
+{
+	//仿函数
+	template<class T>
+	struct less
+	{
+		bool operator()(const T& left, const T& right)
+		{
+			return left < right;
+		}
+	};
+
+	template<class T>
+	struct greater
+	{
+		bool operator()(const T& left, const T& right)
+		{
+			return left > right;
+		}
+	};
+	template<class T,class container = vector<T>,class compare = greater<T>>
+	class priority_queue
+	{
+	public:
+		//默认构造函数---看似每写任何东西，实际上对于自定义类型构造函数回去调用自定义类型的默认构造函数
+		priority_queue(){}
+		template<class Iterator>
+		priority_queue(Iterator first, Iterator last)
+			: _con(first, last)
+		{
+			int root;
+			// 将_con中的元素调整成堆的结构
+			//方法1---从上向下使用向上调整算法
+			for (root = 0; root < _con.size(); root++)
+				AdjustUP(root);
+			//方法2---从下向上使用向下调整算法
+			/*for (root = (_con.size() - 2) / 2; root >= 0; root--)
+				AdjustDown(root);*/
+		}
+		//插入元素
+		void push(const T& data)
+		{
+			//优先级队列类似与堆，插入数据时需要使用向上调整算法对调整成堆
+			_con.push_back(data);
+			AdjustUP(_con.size() - 1);
+		}
+		//删除元素
+		void pop()
+		{
+			//堆删除元素时，将第一个和最后一个元素交换，删除最后一个元素，在堆数组使用向下调整算法调整成堆
+			if (empty())
+				return;
+			swap(_con.front(), _con.back());
+			_con.pop_back();
+			AdjustDown(0);
+		}
+		//元素个数
+		size_t size()const
+		{
+			return _con.size();
+		}
+		//判空
+		bool empty()const
+		{
+			return _con.empty();
+		}
+		// 堆顶元素不允许修改，因为：堆顶元素修改可以会破坏堆的特性
+		const T& top()const
+		{
+			return _con.front();
+		}
+		void test()
+		{
+			for (auto e : _con)
+				cout << e << " ";
+			cout << endl;
+		}
+	private:
+		//向下调整算法
+		void AdjustDown(int root)
+		{
+			int child = root * 2 + 1;
+			while (child < _con.size())
+			{
+				// 找以parent为根的较大的孩子
+				if (child + 1 < _con.size() && compare()(_con[child+1],_con[child]))
+					child += 1;
+				// 检测双亲是否满足情况
+				if (compare()(_con[child], _con[root]))
+				{
+					swap(_con[child], _con[root]);
+					root = child;
+					child = root * 2 + 1;
+				}
+				else
+					break;
+			}
+		}
+		//向上调整算法
+		void AdjustUP(int child)
+		{
+			//父子节点比较，如果子节点大于父节点则交换
+			int parent = (child - 1) / 2;
+			while (child > 0)
+			{
+				if (compare()(_con[child], _con[parent]))
+				{
+					swap(_con[child], _con[parent]);
+					//向下继续迭代
+					child = parent;
+					parent = (child - 1) / 2;
+				}
+				else
+					break;
+			}
+		}
+	private:
+		container _con;
+	};
+}
