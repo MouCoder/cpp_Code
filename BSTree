@@ -1,0 +1,167 @@
+#pragma once
+#include<iostream>
+
+template<class k>
+struct BSTNode
+{
+	k value;
+	struct BSTNode<k>* left;
+	struct BSTNode<k>* right;
+
+	BSTNode(const k& val)
+		:value(val), left(nullptr), right(nullptr)
+	{}
+};
+
+template<class k>
+class BSTree
+{
+	typedef BSTNode<k> Node;
+public:
+	bool Insert(const k& val)
+	{
+		//根节点为空格，直接插入
+		if (root == nullptr)
+		{
+			root = new Node(val);
+			return true;
+		}
+
+		//根节点不为空，先找到合适的位置，在插入
+		Node* parent = root;
+		Node* cur = root;
+		while (cur)
+		{
+			//如果找到相同节点，则不需要插入
+			if (cur->value == val)
+			{
+				return false;
+			}
+			else if (cur->value < val)
+			{
+				parent = cur;
+				cur = cur->right;
+			}
+			else
+			{
+				parent = cur;
+				cur = cur->left;
+			}
+		}
+		//找到了，创建节点进行插入
+		Node* tmp = new Node(val);
+		if (parent->value < val)
+		{
+			parent->right = tmp;
+		}
+		else
+		{
+			parent->left = tmp;
+		}
+
+		return true;
+	}
+
+	const Node* find(const k& val)
+	{
+		Node* cur = root;
+		while (cur)
+		{
+			if (cur->value == val)
+			{
+				return cur;
+			}
+			else if (cur->value < val)
+			{
+				cur = cur->right;
+			}
+			else
+			{
+				cur = cur->left;
+			}
+		}
+		return nullptr;
+	}
+
+	bool Erase(const k& val)
+	{
+		//查找
+		Node* parent = nullptr;
+		Node* cur = root;
+		while (cur)
+		{
+			if (cur->value > val)
+			{
+				//在左子树
+				parent = cur;
+				cur = cur->left;
+			}
+			else if (cur->value < val)
+			{
+				//在右子树找
+				parent = cur;
+				cur = cur->right;
+			}
+			else
+			{
+				//找到了，删除
+				//左子树为空
+				if (cur->left == nullptr)
+				{
+					if (cur == root)
+						root = cur->right;
+					//父节点指向右子树
+					else
+					{
+						if (cur == parent->left)
+						{
+							parent->left = cur->right;
+						}
+						else
+						{
+							parent->right = cur->right;
+						}
+					}
+				}
+				else if (cur->right == nullptr)
+				{
+					if (cur == root)
+						root = cur->left;
+					else
+					{
+						if (cur == parent->left)
+							parent->left = cur->left;
+						else
+							parent->right = cur->left;
+					}
+				}
+				else
+				{
+					//左右子树都不为空，找右树的最小节点
+					Node* minNode = cur->right;
+					Node* minNodeParent = cur;
+					while (minNode->left)
+					{
+						minNodeParent = minNode;
+						minNode = minNode->left;
+					}
+
+					//将要删除的节点和该节点交换
+					cur->value = minNode->value;
+					//删除交换后的节点
+					if (minNodeParent->left == minNode)
+						minNodeParent->left = minNode->right;
+					else
+						minNodeParent->right = minNode->right;
+
+					//删除节点
+					delete minNode;
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+public:
+	Node* root = nullptr;
+};
