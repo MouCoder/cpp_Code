@@ -1,0 +1,191 @@
+#pragma once
+#include<iostream>
+#include<string>
+#include<stack>
+
+template<class K,class V>
+struct Node
+{
+	K key;
+	V value;
+	Node<K, V>* left;
+	Node<K, V>* right;
+
+	//构造函数，通过指定的key和value值创建节点
+	Node(const K& _key, const V& _val)
+		:key(_key), value(_val)
+		, left(nullptr), right(nullptr)
+	{}
+};
+
+template<class K,class V>
+class BSTreeKV
+{
+	typedef Node<K, V> Node;
+public:
+	//默认构造一个空的，只有当插入节点时才创建root节点
+	//插入一个节点
+	void insert(const K& key, const V& value)
+	{
+		Node* newNode = new Node(key, value);
+		//如果根节点为空，直接插入
+		if (root == nullptr)
+			root = newNode;
+		else
+		{
+			//找到一个合适的插入位置，进行插入
+			Node* cur = root;
+			while (cur->left || cur->right)
+			{
+				if (cur->key > newNode->key)
+				{
+					if (cur->left == nullptr)
+						break;
+					cur = cur->left;
+				}
+				else if (cur->key < newNode->key)
+				{
+					if (cur->right == nullptr)
+						break;
+					cur = cur->right;
+				}
+				else 
+				{
+					//已经存在该节点， 不重复插入
+					return;
+				}
+			}
+			//判断prev和cur的关系，将newNode插入
+			if (cur->key > newNode->key)
+			{
+				cur->left = newNode;
+			}
+			else
+			{
+				cur->right = newNode;
+			}
+		}
+	}
+
+	//查找
+	void find(const K& k)
+	{
+		Node* cur = root;
+		while (cur)
+		{
+			if (cur->key > k)
+			{
+				cur = cur->left;
+			}
+			else if (cur->key < k)
+			{
+				cur = cur->right;
+			}
+			else
+			{
+				std::cout << k << "->"<<cur->value<<std::endl;
+				break;
+			}
+		}
+		if (cur == nullptr)
+		{
+			std::cout << "没有找到该节点" << std::endl;
+		}
+	}
+
+	//删除
+	void erase(const K& k)
+	{
+		Node* parent = nullptr;
+		Node* cur = root;
+		while (cur)
+		{
+			if (cur->key > k)
+			{
+				parent = cur;
+				cur = cur->left;
+			}
+			else if (cur->key < k)
+			{
+				parent = cur;
+				cur = cur->right;
+			}
+			else
+			{
+				//找到了要删除的节点
+				//左子树为或者右子树为空，根节点指向cur的；另一个孩子节点
+				if (cur->left == nullptr)
+				{
+					if (parent->left == cur)
+					{
+						parent->left = cur->right;
+					}
+					else
+						parent->right = cur->right;
+				}
+				else if (cur->right == nullptr)
+				{
+					if (parent->left == cur)
+					{
+						parent->left = cur->left;
+					}
+					else
+						parent->right = cur->left;
+				}
+				//左右子树都不为空，找最左节点进行替换
+				else
+				{
+					Node* tmp = cur;
+					while (tmp->left)
+					{
+						parent = tmp;
+						tmp = tmp->left;
+					}
+					//交换cur和tmp
+					cur->key = tmp->key;
+					cur->value = tmp->value;
+					if (tmp->right)
+					{
+						parent->left = tmp->right;
+					}
+					else
+						parent->left = nullptr;
+					delete tmp;
+				}
+				//删除成功
+				std::cout << "删除成功" << std::endl;
+				break;
+			}
+		}
+		if (cur == nullptr)
+		{
+			std::cout << "没有找到要删除的节点"<<std::endl;
+		}
+	}
+
+	//非递归---前序遍历
+	void prevPrint()
+	{
+		std::stack<Node*> st;
+		Node* cur = root;
+		while (cur || !st.empty())
+		{
+			//打印并将左路节点入栈
+			while (cur)
+			{
+				st.push(cur);
+				std::cout << "<" << cur->key << "," << cur->value << ">" << " ";
+				cur = cur->left;
+			}
+			//左路节点出栈并将右孩子节点入栈
+			Node* tmp = st.top();
+			st.pop();
+			cur = tmp->right;
+		}
+		std::cout << std::endl;
+	}
+private:
+	Node* root = nullptr;
+};
+
+
