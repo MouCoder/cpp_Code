@@ -1,0 +1,212 @@
+#include<iostream>
+#include<set>
+#include<list>
+#include<string>
+#include<vector>
+#include<map>
+using namespace std;
+
+//void print(set<int>::iterator begin,set<int>::iterator end)
+//{
+//	while (begin != end)
+//	{
+//		std::cout << *begin << " ";
+//		begin++;
+//	}
+//
+//	std::cout << std::endl;
+//}
+//
+//int main()
+//{
+//	set<int> s1;//使用空构造构造一个空的set
+//
+//	//向s1中插入元素，使s1不在为空
+//	s1.insert(5);
+//	s1.insert(8);
+//	s1.insert(6);
+//	s1.insert(3);
+//	s1.insert(9);
+//
+//	print(s1.begin(), s1.end());
+//
+//	//使用拷贝构造构造一个和s1具有相同元素的set s2
+//	set<int> s2(s1);
+//	print(s2.begin(),s2.end());
+//
+//	//使用迭代器区间构造构造一个和s1相同的set s3
+//	set<int> s3(s1.begin(),s1.end());
+//	print(s3.begin(), s3.end());
+//
+//
+//	//使用数组、vector迭代器区间构造set s4、s5
+//	int array[5] = {1,2,3,4,5};
+//	vector<int> v(array,array+5);//使用数组构造vector
+//	
+//	set<int> s4(array,array+5);
+//	print(s4.begin(), s4.end());
+//
+//	set<int> s5(v.begin(),v.end());
+//	print(s5.begin(), s5.end());
+//
+//
+//	//使用list迭代器构造set
+//	list<int> lt(array,array+5);
+//	set<int> s6(lt.begin(),lt.end());
+//	print(s6.begin(), s6.end());
+//
+//
+//	//使用string迭代器构造
+//	string str = "abcd";
+//
+//	set<char> s7(str.begin(),str.end());
+//	auto it = s7.begin();
+//	while (it != s7.end())
+//	{
+//		std::cout << *it << " ";
+//		it++;
+//	}
+//	std::cout << std::endl;
+//	return 0;
+//}
+
+
+//int main()
+//{
+//	set<int> s1;
+//	s1.insert(5);
+//	s1.insert(8);
+//	s1.insert(6);
+//	s1.insert(3);
+//	s1.insert(9);
+//
+//	//正向迭代器遍历
+//	set<int>::iterator it = s1.begin();
+//	while (it != s1.end())
+//	{
+//		cout << *it << " ";
+//		it++;
+//	}
+//	cout << endl;
+//	//反向迭代器遍历
+//	set<int>::reverse_iterator rit = s1.rbegin();
+//	while (rit != s1.rend())
+//	{
+//		cout << *rit << " ";
+//		rit++;
+//	}
+//	cout << endl;
+//	return 0;
+//}
+
+//int main()
+//{
+//	set<int> s1;
+//	s1.insert(5);
+//	s1.insert(8);
+//	s1.insert(6);
+//	s1.insert(3);
+//	s1.insert(9);
+//
+//	cout << s1.size() << " " << s1.max_size() << endl;
+//
+//	string str = "abcde";
+//	set<char> s2(str.begin(),str.end());
+//
+//	cout << s2.size() << " " << s2.max_size() << endl;
+//	return 0;
+//}
+
+//void print(set<int>::iterator begin, set<int>::iterator end)
+//{
+//	while (begin != end)
+//	{
+//		std::cout << *begin << " ";
+//		begin++;
+//	}
+//
+//	std::cout << std::endl;
+//}
+//
+//int main()
+//{
+//	set<int> s1;
+//	s1.insert(5);
+//	s1.insert(8);
+//	s1.insert(6);
+//	s1.insert(3);
+//	s1.insert(9);
+//
+//	print(s1.begin(),s1.end());
+//	//向s1中插入一个值
+//	s1.insert(15);//set中没有和要插入的值相同的值
+//	print(s1.begin(), s1.end());
+//
+//	s1.insert(3);//要插入的值set中已经存在
+//	print(s1.begin(), s1.end());
+//
+//
+//	//删除
+//	s1.erase(15);
+//	print(s1.begin(), s1.end());
+//
+//
+//	//swap---交换两个set
+//	set<int> s2;
+//	s2.insert(50);
+//	s2.insert(80);
+//	s2.insert(60);
+//	s2.insert(30);
+//	s2.insert(90);
+//
+//	s1.swap(s2);
+//	print(s1.begin(), s1.end());
+//	print(s2.begin(), s2.end());
+//
+//	//查找
+//	auto it = s1.find(30);
+//	cout << *it << endl;
+//	s1.erase(it);
+//	print(s1.begin(), s1.end());
+//
+//	//count
+//	cout << s1.count(50) << endl;
+//
+//	return 0;
+//}
+
+int main()
+{
+	map<char, int> m1;//构造一个空的map
+	/*
+	operator[]的原理是：
+	用<key, T()>构造一个键值对，然后调用insert()函数将该键值对插入到map中
+	如果key已经存在，插入失败，insert函数返回该key所在位置的迭代器
+	如果key不存在，插入成功，insert函数返回新插入元素所在位置的迭代器
+	operator[]函数最后将insert返回值键值对中的value返回*/
+
+	m1['a'] = 65;
+	m1.insert(pair<char, int>('a', 65));
+	m1.insert(pair<char, int>('b', 66));
+	m1.insert(pair<char, int>('c', 67));
+	m1.insert(pair<char, int>('d', 68));
+	m1.insert(pair<char, int>('e', 69));
+	m1.insert(pair<char, int>('f', 70));
+
+	auto it = m1.find('a');//key值查找
+
+	//删除
+	m1.erase('b');//key值删除
+	m1.erase(it);//迭代器删除
+	m1.erase(m1.begin(),m1.end());//迭代器区间删除
+
+	//清空
+	m1.clear();
+
+	//拷贝构造
+	map<char, int> m2(m1);
+	m1.swap(m2);
+	
+
+	return 0;
+}
