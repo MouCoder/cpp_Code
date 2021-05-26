@@ -1,0 +1,314 @@
+#pragma once                                                                                                                                                            
+    
+#include<iostream>    
+#include<stdlib.h>    
+#include<vector>    
+using namespace std;    
+    
+//节点定义    
+template<class K,class V>    
+struct AVLTreeNode    
+{    
+    pair<K,V> _val;//节点，键值对    
+    int _bf;//平衡因子    
+    AVLTreeNode<K,V>* _left;//左子树    
+    AVLTreeNode<K,V>* _right;//右子树    
+    AVLTreeNode<K,V>* _parent;//双亲节点    
+    
+    AVLTreeNode(const pair<K,V>& val)    
+      :_val(val),_bf(0)    
+       ,_left(nullptr),_right(nullptr),_parent(nullptr)    
+    {}    
+};    
+    
+template<class K,class V>    
+class AVLTree     
+{    
+    typedef AVLTreeNode<K,V> Node;    
+private:    
+    Node* root = nullptr;//根节点    
+public:    
+    //构造函数    
+    //析构函数    
+    //插入--返回一个键值对，键值对的第一个值是插入节点的指针第二个值是bool值表示是否插入成功    
+    pair<Node*,bool> insert(const pair<K,V>& val)    
+    {        //1.找到该节点并插入
+        Node* newNode = new Node(val);
+        //如果是一颗空树，新插入节点就为跟节点
+        if(root == nullptr)
+        {
+            root = newNode;  
+            return make_pair(root,true); 
+        }
+        //找到插入位置
+        Node* parent = nullptr;//当前节点的父节点
+        Node* cur = root;
+        while(cur)
+        {
+            if((cur->_val).first < (newNode->_val).first)
+            {
+                //左走
+                parent = cur;
+                cur = cur->left;
+            }
+            else if((cur->_val).first > (newNode->_val).first)
+            {
+                //右走
+                parent = cur;
+                cur = cur->right;
+            }
+            else 
+            {
+                //找到了，不需要插入，直接返回
+                return make_pair(cur,false);
+            }                                                                                                                                                           
+        }
+        //插入节点
+        if((parent->_val).first > (newNode->_val).first)
+        {
+            //插入到parent的左孩子节点处            parent->right = newNode;  
+            newNode->_parent = parent;
+        }                                                                                                                                                               
+        //2.调整平衡因子
+        /*基本思路
+         * 从该节点的父节点开始调整，如果父节点的平衡因子变成了0，则停止调整
+         * 如果该节点的父节点的平衡因子不是0，则继续向上调整，直到某个节点的
+         * 平衡因子变成0或者调整到了根节点
+         * 调整平衡因子的策略是，如果插入的节点是该节点的左孩子节点则平衡因子-1
+         * 如果是该节点的右孩子节点，则平衡因子+1
+         */  
+        cur = newNode;
+        while(parent)
+        {
+            if(cur == parent->left)
+            {
+                //parent的平衡因子-1
+                parent->_bf--;
+            }
+            else 
+            {
+                //parent的平衡因子+1
+                parent->_bf++;
+            }
+            //判断parent的平衡因子是否为0
+            if(parent->_bf == 0)
+            {
+                //调整完成
+                break;
+            }
+            else if(parent->bf == -1 || parent->bf == 1)
+            {                //继续向上调整
+                cur = parent;
+                parent = parent->_parent;
+            }
+            else 
+            {
+                //已经不再是一颗AVL树，需要进行旋转
+                if(parent->_bf == -2)
+                {
+                    if(parent->_left->_bf == -1)
+                    {
+                        //新插入的节点是较高的左子树的左孩子节点---右单旋
+                        RotateR(parent); 
+                    }
+                    else 
+                    {
+                        //左右单旋
+                        RotateLR(parent);
+                    }
+                }
+                else if(parent->_bf == 2)
+                {
+                    if(parent->_right->_bf == 1)
+                    {
+                        //左单旋
+                        RotateL(parent);
+                    }
+                    else 
+                    {
+                        //右左单旋                                                                                                                                      
+                        RotateRL(parent);
+                    }
+                }
+            }
+        }       return make_pair(cur,false);
+    }
+    //右单旋
+    void RotateR(Node* parent)
+    {
+        Node* parentL = parent->_left;//parent的左孩节点
+        Node* subR = parentL->_right;//parent的左孩子节点的右孩子节点
+        
+        Node* parentParent = parent->parent;
+        //parent的左孩子节点指向parentL的右孩子节点
+        parentL = subR;
+        if(subR)
+            subR->_parent = parent;
+        //parent变成parentL的右孩子节点
+        subR = parent;
+        //parent的父节点变成parent的左孩子节点
+        parent->_parent = parentL;
+       //parent是根节点
+       if(parent == root)
+       {                                                                      
+            root = parentL;
+            root->_parent = nullptr;
+       }
+       else 
+       {
+            if(parent == parentParent->_left)
+            {
+                parentParent->_left = parentL;
+                parentL->_parent = parentParent;
+            }                                                                                                                                                           
+            else 
+            {
+                parentParent->_right = parentL;
+                parentL->_parent = parentParent;
+            }       }
+       parent->_bf = parentL->_bf = 0;
+    }
+    //左单旋                                                                                                                                                            
+    void RotateL(Node* parent)
+    {
+        Node* parentR = parent->_right;//parent的右孩子节点
+        Node* subRL = parentR->_left;//parent的右孩子的左孩子节点
+        
+        Node* parentParent = parent->_parent;
+        //parent的右孩子节点指向parent的右孩子节点的左孩子节点
+        parentR = subRL;
+        if(subRL)
+            subRL->_parent = parentR;
+        //parent的右孩子节点的左孩子节点指向parent节点
+        subRL = parent;
+        //parent的父节点指向parent的右孩子节点
+        parent->_parent = parentR;
+        if(parent == root)
+        {
+            root = parentR;
+            root->_parent = nullptr;
+        }
+        else
+        {
+            if(parentParent->_left == parent)
+            {
+                parentParent->_left = parent;
+            }
+            else 
+            {
+                parentParent->_right = parent;
+            }            parent->_parent = parentParent;
+        }
+        parent->_bf = parentR->_bf = 0;
+    }
+    //左右单旋
+    void RotateLR(Node* parent)
+    {
+        Node* parentL = parent->_left;
+        Node* subLR = parentL->_right;
+        int subLRBf = subLR->_bf;
+        //左孩子节点进行左单旋
+        RotateL(parent->_left);
+        RotateR(parent);
+        //调整平衡因子
+        if(subLRBf == 1)
+        {
+            parent->_bf = subLR->_bf = 0;
+            parentL->_bf = -1;
+        }
+        else if(subLRBf == -1)
+        {
+            subLR->_bf = parentL->_bf = 0;
+            parent->_bf = -1;
+        }
+        else 
+        {
+            parent->_bf = parentL->_bf = subLR->_bf = 0;
+        }
+    }
+    //右左单旋                                                                                                                                                          
+    void RotateRL(Node* parent)
+    {
+        Node* parentR = parent->_right; 
+        Node* subRL = parentR->_left;
+        int subRLBf = subRL->_bf;
+        //该节点的右孩子进行右旋转
+        RotateR(parent->_right);
+        //该节点进行左旋转
+        RotateL(parent);
+ 
+        //调整平衡因子
+        if(subRLBf == 1)
+        {
+            parentR->_bf = subRL->_bf = 0;
+            parent->_bf = -1;
+        }
+        else if(subRLBf == -1)
+        {
+            parentR->_bf = subRL->_bf = 0;
+            parent->_bf = 1;
+        }
+        else 
+        {
+            parentR->_bf = subRL->_bf = parent->_bf = 0;
+        }
+    }
+    //中序遍历AVL树
+    static void BSTreeInOrder(Node* node,vector<pair<K,V>>& inOrder)
+    {
+        //inOrder是输出型参数，将遍历结果保存到该数组中
+        if(node == nullptr)
+            return;
+        BSTreeInOrder(node->_left,inOrder);
+        inOrder.push_back(node->_val);                                                                                                                                  
+        BSTreeInOrder(node->_right,inOrder);
+    }
+    bool isBSTree()
+    {
+        vector<pair<K,V>> inOrder;       BSTreeInOrder(root,inOrder);
+        if(inOrder.empty())
+            return true;
+        //遍历，检查是否有序
+        pair<K,V> tmp = inOrder[0];                                                                                                                                     
+        for(int i = 1;i < inOrder.size();i++)
+        {
+            if(tmp.first < inOrder[i].first)
+            {
+                tmp = inOrder[i];
+            }
+            else 
+              return false;
+        }
+    }
+    //二叉树的高度
+    static int BSTreeHeight(Node* node)
+    {
+        if(node == nullptr)
+            return 0;
+        int left = BSTreeHeight(node->_left);
+        int right = BSTreeHeight(node->_right);
+        
+        return left>right?(left+1):(right+1);
+    }
+    //判断是否平衡
+    static bool _isBalance(Node* root)
+    {
+        //求左右子树的高度
+        int left = BSTreeHeight(root->_left); 
+        int right = BSTreeHeight(root->_right);
+        if(abs(left-right) <= 1)
+        {
+            return _isBalance(root->_left) && _isBalance(root->_right);        }
+        else 
+            return false;
+    }
+    //验证AVL树
+    bool isBalance()
+    {
+        if(root == nullptr)
+            return true;
+        if(isBSTree() && _isBalance())
+            return true;
+        return false;
+    }
+}
