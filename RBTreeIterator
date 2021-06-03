@@ -1,0 +1,435 @@
+namespace Moua
+{
+	//定义节点
+	template<class Value_Type>
+	struct RBTreeNode
+	{
+		typedef RBTreeNode<Value_Type> Node;
+		Color _col;
+		Node* _parent;
+		Node* _left;
+		Node* _right;
+
+		Value_Type _val;
+
+		//构造函数
+		RBTreeNode(const Value_Type& val)
+			:_col(RED),
+			_val(val),
+			_parent(nullptr), _left(nullptr), _right(nullptr)
+		{}
+		
+	};
+
+	//迭代器定义
+	//template<class T,class T&,class T*>
+	template<class T, class Ref, class Ptr>
+	struct RBTreeIterator
+	{
+		typedef RBTreeNode<T> Node;
+		typedef RBTreeIterator<T, Ref, Ptr> Self;
+		Node* _node;
+		//构造函数
+		RBTreeIterator(Node* nd)
+			:_node(nd)
+		{}
+
+		Ref operator*()
+		{
+			return _node->_val;
+		}
+		Ptr operator->()
+		{
+			return &(_node->_val);
+		}
+
+		//前置++
+		Self operator++()
+		{
+			if (_node->_right)
+			{
+				//找到右孩子节点的最左孩子节点
+				Node* cur = _node->_right;
+				while (cur->_left)
+				{
+					cur = cur->_left;
+				}
+				_node = cur;
+			}
+			else
+			{
+				//当前节点的右孩子节点为空
+				Node* cur = _node;
+				Node* parent = cur->_parent;
+
+				//如果当前节点是父节点的右孩子节点
+				while (parent && parent->_right == cur)
+				{
+					cur = parent;
+					parent = parent->_parent;
+				}
+				_node = parent;
+			}
+			return *this;
+		}
+		//后置++
+		Self operator++(int)
+		{
+			Self ret = *this;
+			//调用前置++
+			++(*this);
+			return ret;
+		}
+		//前置--
+		Self operator--()
+		{
+			//左子树存在
+			if (_node->_left)
+			{
+				//找左子树的最右节点
+				Node* cur = _node->_left;
+				while (cur->_right)
+				{
+					cur = cur->_right;
+				}
+			}
+			else
+			{
+				//左子树不存在，向上找
+				Node* cur = _node;
+				Node* parent = cur->_parent;
+
+				//找不是父节点的左孩子节点的节点
+				while (parent && parent->_left == cur)
+				{
+					cur = parent;
+					parent = parent->_parent;
+				}
+				_node = parent;
+			}
+		}
+		//后置--
+		Self operator--(int)
+		{
+			Self cur = this;
+			--(*this);
+			return cur;
+		}
+		//不等于
+		bool operator!=(const Self s) const
+		{
+			return _node != s._node;
+		}
+	};
+
+	//红黑树
+	template<class key,class T,class KeyOfT>
+	class RBTree
+	{
+		//注意：节点模板参数传T即可
+		typedef RBTreeNode<T> Node;
+	private:
+		Node* _root = nullptr;//根节点
+	public:
+		typedef RBTreeIterator<T, T&, T*> iterator;
+		typedef RBTreeIterator<T, const T&, const T*> ConstIterator;
+
+		iterator begin()
+		{
+			Node* cur = _root;
+			//返回数的最左孩子节点
+			while (cur && cur->_left)
+			{
+				cur = cur->_left;
+			}
+
+			return iterator(cur);
+		}
+
+		iterator end()
+		{
+			//直接返回一个空节点即可
+			return iterator(nullptr);
+		}
+
+		//插入---插入的节点的值应该是T类型的
+		pair<Node*, bool> insert(const T& val)
+		{
+			KeyOfT compare;//对仿函数进行实例化
+			//申请节点
+			Node* newNode = new Node(val);
+			//如果根节点为空，直接插入为根节点
+			if (_root == nullptr)
+			{
+				_root = newNode;
+				_root->_col = BLACK;
+				return make_pair(_root, true);
+			}
+			//找插入位置进行插入
+			Node* cur = _root;
+			Node* parent = nullptr;
+			while (cur)
+			{
+				//
+这里的比较直接使用仿函数进行比较（set和map的比较方式不�
+��）
+				if (compare(cur->_val) > compare(newNode->_val))
+				{
+					//插入的节点比cur小，左插
+					parent = cur;
+					cur = cur->_left;
+				}
+				else if (compare(cur->_val) < compare(newNode->_val))
+				{
+					//插入的节点比cur大，右插
+					parent = cur;
+					cur = cur->_right;
+				}
+				else
+				{
+					//插入的节点存在，直接返回该节点的val
+					return make_pair(cur, false);
+				}
+			}
+			//找到了插入位置，进行插入
+			if (compare(parent->_val) > compare(newNode->_val))
+			{
+				//插入到parent的左边
+				parent->_left = newNode;
+				newNode->_parent = parent;
+			}
+			else
+			{
+				//插入到parent的右边
+				parent->_right = newNode;
+				newNode->_parent = parent;
+			}
+			//插入成功，对树进行调整
+			cur = newNode;
+			parent = cur->_parent;
+			//新插入节点的父节点是红色的才需要调整---
+走到这里，新插入的节点父节点肯定存在
+			while (parent && parent->_col == RED)
+			{
+				//走到这里grandParent节点必然是黑色的
+				Node* grandParent = parent->_parent;
+				Node* uncle = nullptr;
+				if (grandParent->_left == parent)
+				{
+					uncle = grandParent->_right;
+				}
+				else
+				{
+					uncle = grandParent->_left;
+				}
+				//情况1：新插入节点的叔叔节点存在且为红
+				if (uncle && uncle->_col == RED)
+				{
+					//将父节点和叔叔节点变成黑色，爷爷节点变成红色
+					uncle->_col = BLACK;
+					parent->_col = BLACK;
+					grandParent->_col = RED;
+					//继续迭代
+					cur = grandParent;
+					parent = cur->_parent;
+				}
+				else
+				{
+					//
+新插入节点的叔叔节点不存在或者新插入节点的叔叔节点为�
+��色
+					if (grandParent->_left == parent)
+					{
+						if (parent->_left == cur)
+						{
+							//右单旋
+							RotateR(grandParent);
+							//调整颜色
+							parent->_col = BLACK;
+							grandParent->_col = RED;
+						}
+						else
+						{
+							//左右双旋
+							RotateL(parent);
+							RotateR(grandParent);
+							//调整颜色
+							cur->_col = BLACK;
+							grandParent->_col = RED;
+						}
+					}
+					else
+					{
+						if (parent->_right == cur)
+						{
+							//左单旋
+							RotateL(grandParent);
+							parent->_col = BLACK;
+							grandParent->_col = RED;
+						}
+						else
+						{
+							//右左双旋
+							RotateR(parent);
+							RotateL(grandParent);
+							//调整颜色
+							cur->_col = BLACK;
+							grandParent->_col = RED;
+						}
+					}
+					break;
+				}
+			}
+
+			//
+在调整过程中，有可能将根节点变成了红色节点，因此需要�
+��根节点调整成黑色的
+			_root->_col = BLACK;
+
+			return make_pair(newNode, true);
+		}
+
+		//右单旋
+		void RotateR(Node* parent)
+		{
+			Node* subL = parent->_left;
+			Node* subLR = subL->_right;
+
+			parent->_left = subLR;
+			if (subLR)
+				subLR->_parent = parent;
+
+			Node* parentParent = parent->_parent;
+
+			subL->_right = parent;
+			parent->_parent = subL;
+
+			if (parent == _root)
+			{
+				_root = subL;
+				_root->_parent = nullptr;
+			}
+			else
+			{
+				if (parentParent->_left == parent)
+				{
+					parentParent->_left = subL;
+				}
+				else
+				{
+					parentParent->_right = subL;
+				}
+
+				subL->_parent = parentParent;
+			}
+		}
+		//左单旋
+		void RotateL(Node* parent)
+		{
+			Node* subR = parent->_right;
+			Node* subRL = subR->_left;
+
+			parent->_right = subRL;
+			if (subRL)
+			{
+				subRL->_parent = parent;
+			}
+
+			subR->_left = parent;
+
+			Node* parentParent = parent->_parent;
+			parent->_parent = subR;
+
+			if (_root == parent)
+			{
+				_root = subR;
+			}
+			else
+			{
+				if (parentParent->_left == parent)
+				{
+					parentParent->_left = subR;
+				}
+				else
+				{
+					parentParent->_right = subR;
+				}
+			}
+
+			subR->_parent = parentParent;
+		}
+
+		static void _inOrder(Node* root)
+		{
+			KeyOfT compare;//对仿函数进行实例化
+			if (root == nullptr)
+				return;
+			_inOrder(root->_left);
+			std::cout << compare(root->_val) << " ";
+			_inOrder(root->_right);
+		}
+		//中序遍历
+		void inOrder()
+		{
+			_inOrder(_root);
+			std::cout << endl;
+		}
+
+		bool RedNode(Node* root)
+		{
+			if (root == nullptr)
+			{
+				return true;
+			}
+			if (root->_col == RED)
+			{
+				//判断父节点是否为红色
+				if (root->_parent && root->_parent->_col == RED)
+				{
+					return false;
+				}
+			}
+			//判断左右子树
+			return RedNode(root->_left) && RedNode(root->_right);
+		}
+
+		bool BlackNodeNum(Node* root, int blackNum, int num)
+		{
+			//检查是否每条路径上的黑色节点的个数都相同
+			if (root == nullptr)
+			{
+				return blackNum == num;
+			}
+
+			if (root->_col == BLACK)
+			{
+				blackNum++;
+			}
+
+			return BlackNodeNum(root->_left, blackNum, num) && BlackNodeNum(root->
+_right, blackNum, num);
+		}
+
+		//检查红黑树
+		bool check()
+		{
+			if (_root && _root->_col == RED)
+			{
+				return false;
+			}
+
+			//求出一条路径上黑色节点的个数
+			int num = 0;
+			Node* cur = _root;
+			while (cur)
+			{
+				if (cur->_col == BLACK)
+				{
+					num++;
+				}
+				cur = cur->_left;
+			}
+			return RedNode(_root) && BlackNodeNum(_root, 0, num);
+		}
+	};
+}
