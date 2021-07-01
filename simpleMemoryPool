@@ -1,0 +1,188 @@
+#include<iostream>
+#include<vector>
+#include<ctime>
+using namespace std;
+
+template<class T>
+class MemPool
+{
+private:
+	//内存块结构
+	typedef struct BlockNode
+	{
+		void* _memory;//内存块地址
+		BlockNode* _next;//下一个blockNode
+		size_t _objNum;//内存块对象的个数
+		//构造函数---num表示申请对象的个数
+		BlockNode(size_t num)
+			:_objNum(num),
+			_next(nullptr)
+		{
+			_memory = malloc(_objNum*_size);
+		}
+
+		~BlockNode()
+		{
+			free(_memory);
+			_memory = nullptr;
+			_next = nullptr;
+			_objNum = 0;
+		}
+	}BlockNode;
+protected:
+	static size_t _size;//单个对象的大小
+	T* _releaseMemory = nullptr;//释放的内存
+	BlockNode* _requestMemory;//申请的内存块
+	size_t _maxNum;//内存块最大的大小
+	size_t _useCount;//当前内存块已经使用的对象个数
+protected:
+	//设置单个对象的大小
+	static size_t setSize()
+	{
+		return (sizeof(T) >= sizeof(T*) ? sizeof(T):sizeof(T*));
+	}
+public:
+	MemPool()
+		:_useCount(0),
+		_releaseMemory(nullptr),
+		_maxNum(100000*_size)
+	{
+		//开始先申请32个_size大小的空间
+		_requestMemory = new BlockNode(32);
+	}
+
+	~MemPool()
+	{
+		BlockNode *cur = _requestMemory;
+		while (cur)
+		{
+			BlockNode* del = cur;
+			cur = cur->_next;
+			delete del;            //会自动调用~BlockNode()
+		}
+	}
+
+	T* New()
+	{
+		//先在releaseMemory中找
+		if (_releaseMemory)
+		{
+			T* obj = _releaseMemory;
+			_releaseMemory = *((T**)_releaseMemory);//releaseMemory的前几个字节存储的是下一个节点的地址
+			return obj;
+		}
+		else
+		{
+			//判断requesetMemory中是否还有空闲内存
+			if (_requestMemory->_objNum == _useCount)
+			{
+				//取物理内存中申请一块内存
+				size_t size = 2 * _useCount >= _maxNum ? _maxNum : 2 * _useCount;
+				BlockNode* newBlock = new BlockNode(size);
+
+				newBlock->_next = _requestMemory;
+				_requestMemory = newBlock;
+				_useCount = 0;
+			}
+			//走到这里，一定有内存
+			T* obj = (T*)((char*)_requestMemory->_memory+_useCount*_size);
+
+			_useCount++;
+			return new(obj)T();//用定位new对这块空间初始化
+		}
+	}
+
+	void Delete(T* obj)
+	{
+		if (obj)
+		{
+			obj->~T();
+
+			*((T**)obj) = _releaseMemory;
+			_releaseMemory = obj;
+		}
+	}
+};
+
+//静态成员变量，类外初始化
+template<typename T>
+size_t MemPool<T>::_size = MemPool<T>::setSize();
+
+struct TreeNode
+{
+	int _val;
+	TreeNode* _left;
+	TreeNode* _right;
+};
+void test1()
+{
+	MemPool<TreeNode> mp;
+
+	vector<TreeNode*> v;
+	for (int i = 0; i < 10; i++)
+	{
+		TreeNode* mem = mp.New();
+		v.push_back(mem);
+	}
+
+	for (int i = 0; i < 10; i++)
+	{
+		mp.Delete(v[i]);
+	}
+}
+
+void test2()
+{
+	MemPool<TreeNode> tnPool;
+	std::vector<TreeNode*> v1;
+	//申请110000个treeNode
+	//使用MemPoll申请
+	size_t begin1 = clock();
+	for (int i = 0; i < 110000; ++i)
+	{
+		v1.push_back(tnPool.New());
+	}
+	for (int i = 0; i < 110000; ++i)
+	{
+		tnPool.Delete(v1[i]);
+	}
+	v1.clear();
+
+	size_t end1 = clock();
+
+	//使用new和delete
+	size_t begin2 = clock();
+	for (int i = 0; i < 110000; ++i)
+	{
+		v1.push_back(new TreeNode);
+	}
+
+	for (int i = 0; i < 110000; ++i)
+	{
+		delete v1[i];
+	}
+	v1.clear();
+	size_t end2 = clock();
+	//使用malloc和free
+	size_t begin3 = clock();
+	for (int i = 0; i < 110000; ++i)
+	{
+		v1.push_back((TreeNode*)malloc(sizeof(TreeNode*)));
+	}
+	for (int i = 0; i < 110000; ++i)
+	{
+		free(v1[i]);
+	}
+	v1.clear();
+	size_t end3 = clock();
+
+	cout <<"MemPool " <<end1 - begin1 << endl;
+	cout << "new/delete " << end2 - begin2 << endl;
+	cout << "malloc/free " << end3 - begin3 << endl;
+}
+
+int main()
+{
+	test2();
+	return 0;
+}
