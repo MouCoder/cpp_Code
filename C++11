@@ -1,0 +1,310 @@
+#include<iostream>
+#include<vector>
+#include<map>
+
+using namespace std;
+
+
+//int main()
+//{
+//	内置类型的列表初始化
+//	int x1 = { 10 };
+//	int x2{ 10 };
+//	int x3 = { 2 + 5 };
+//	int x4{ 2 + 5 };
+//	char等其他内置类型也是如此
+//	char ch1 = { 'c' };
+//	char ch2{ 'c' };
+//
+//	数组---静态数组
+//	int arry1[] = {1,2,3,4,5};
+//	int arry2[]{1,2,3,4,5};
+//	int arry3[5]{1, 2, 3, 4, 5};
+//
+//	数组---动态数组
+//	int* array = new int[]{1, 2, 3, 4, 5};
+//
+//	STL容器
+//	vector<int> v{ 1, 2, 3, 4, 5 };
+//	map<int, int> mp{ {1,1}, {2,2}, {3,3} };
+//	return 0;
+//}
+
+
+//class test
+//{
+//private:
+//	int a;
+//	int b;
+//public:
+//	test(int _a, int _b) :a(_a), b(_b)
+//	{}
+//};
+//
+//int main()
+//{
+//	//和使用()调用构造函数没啥区别
+//	test t{ 1, 2 };
+//	return 0;
+//}
+
+//#include <initializer_list>
+//
+//template<class T>
+//class Vector {
+//public:
+//	// ...
+//	Vector(initializer_list<T> l) : _capacity(l.size()), _size(0)
+//	{
+//		_array = new T[_capacity];
+//		for (auto e : l)
+//			_array[_size++] = e;
+//	}
+//	Vector<T>& operator=(initializer_list<T> l) {
+//		delete[] _array;
+//		size_t i = 0;
+//		for (auto e : l)
+//			_array[i++] = e;
+//		return *this;
+//	}
+//	// ...
+//private:
+//	T* _array;
+//	size_t _capacity;
+//	size_t _size;
+//};
+//
+//int main()
+//{
+//	return 0;
+//	//我们自己实现的类，也可以支持可变参数个数的构造了
+//	Vector<int> v{1,2,3,4,5};
+//}
+
+
+//int  main()
+//{
+//	vector<int> v{1,2,3,4,5};
+//	return 0;
+//}
+
+//#include <map>
+//#include <string>
+//int main()
+//{
+//	short a = 32670;
+//	short b = 32670;
+//	// c如果给成short，会造成数据丢失，如果能够让编译器根据a+b的结果推导c的实际类型，就不会存在问题
+//	short c = a + b;
+//	std::map<std::string, std::string> m{ { "apple", "苹果" }, { "banana", "香蕉" } };
+//	// 使用迭代器遍历容器, 迭代器类型太繁琐
+//	std::map<std::string, std::string>::iterator it = m.begin();
+//	while (it != m.end())
+//	{
+//		cout << it->first << " " << it->second << endl;
+//		++it;
+//	}
+//	return 0;
+//}
+
+
+
+
+//int main()
+//{
+//	auto a = 10;
+//	//自动推导出是int类型
+//	cout << sizeof(a) << endl;
+//
+//	map<string, string> mp;
+//	map<string, string>::iterator it1;
+//	auto it2 = mp.begin();//使用auto定义变量声明和初始化不能分离
+//	return 0;
+//}
+
+//
+//int main()
+//{
+//	int a = 10;
+//	int b = 20;
+//	// 用decltype推演a+b的实际类型，作为定义c的类型
+//	decltype(a + b) c;
+//	//达因变量的类型
+//	cout << typeid(c).name() << endl;
+//	return 0;
+//}
+
+//void* GetMemory(size_t size)
+//{
+//	return malloc(size);
+//}
+//int main()
+//{
+//	// 如果没有带参数，推导函数的类型
+//	cout << typeid(decltype(GetMemory)).name() << endl;
+//	// 如果带参数列表，推导的是函数返回值的类型,注意：此处只是推演，不会执行函数
+//	cout << typeid(decltype(GetMemory(0))).name() << endl;
+//	return 0;
+//}
+
+//#include<initializer_list>
+//template<class T>
+//class Vector
+//{
+//public:
+//	typedef int* iterator;
+//	iterator begin()
+//	{
+//		return a;
+//	}
+//	iterator end()
+//	{
+//		//为了方便特殊处理了一下
+//		return a+5;
+//	}
+//	Vector(initializer_list<T> _a)
+//	{
+//		a = new T[_a.size()];
+//		int i = 0;
+//		for (auto e : _a)
+//		{
+//			a[i] = e;
+//			i++;
+//		}
+//	}
+//private:
+//	int *a;
+//};
+//
+//int main()
+//{
+//	Vector<int> v{1,2,3,4,5};
+//	for (auto e : v)
+//		cout << e << endl;
+//	return 0;
+//}
+
+//#include<array>
+//int main()
+//{
+//	//定义一个含有10个int类型的静态数组
+//	array<int,10> a;
+//	return 0;
+//}
+
+
+
+//class A
+//{
+//public:
+//	A(int a) : _a(a)
+//	{}
+//	// 禁止编译器生成默认的拷贝构造函数以及赋值运算符重载
+//	A(const A&) = delete;
+//	A& operator(const A&) = delete;
+//private:
+//	int _a;
+//};
+//int main()
+//{
+//	A a1(10);
+//	// 编译失败，因为该类没有拷贝构造函数
+//	//A a2(a1);
+//	// 编译失败，因为该类没有赋值运算符重载
+//	A a3(20);
+//	a3 = a2;
+//	return 0;
+//}
+
+//int main()
+//{
+//	//普通的lambda表达式
+//	[](int a, int b)->int{
+//		return a + b;
+//	};
+//	//省略参数和返回值类型，返回值类型有编译器推导,使用捕捉列表捕捉a,b
+//	int a = 10;
+//	int b = 2;
+//	[a,b]{
+//		return a + b;
+//	};
+//
+//	//省略参数和返回值，无返回值
+//	[a, b]{
+//		cout << a << " " << b << endl;
+//	};
+//
+//	//省略参数和返回值类型，无返回值;捕捉列表传引用
+//	//捕捉列表捕捉到的是变量的拷贝，不能直接修改，修改需要使用引用
+//	[&a, &b]{
+//		int c = a;
+//		a = b;
+//		b = c;
+//	};
+//	int c = 30;
+//	//捕捉该函数中的所有边量
+//	[=]{
+//		cout << a << " " << b << " " << c << endl;
+//	};
+//
+//	//定义“函数变量”进行调用
+//	auto add = [](int a, int b)->int{
+//		return a + b;
+//	};
+//
+//	cout << add(1, 2) << endl;
+//
+//	cout << a << " " << b << endl;
+//	auto test = [&a,&b]{
+//		int c = a;
+//		a = b;
+//		b = c;
+//	};
+//	//不调用不会执行
+//	test();
+//
+//	cout << a<<" "<<b << endl;
+//
+//	return 0;
+//}
+
+
+//void(*PF)();
+//int main()
+//{
+//	auto f1 = []{cout << "hello world" << endl; };
+//	auto f2 = []{cout << "hello world" << endl; };
+//	//f1 = f2; // 编译失败--->提示找不到operator=()
+//	// 允许使用一个lambda表达式拷贝构造一个新的副本
+//	auto f3(f2);
+//	f3();
+//	// 可以将lambda表达式赋值给相同类型的函数指针
+//	PF = f2;
+//	PF();
+//	return 0;
+//}
+
+
+class Rate
+{
+public:
+	Rate(double rate) : _rate(rate)
+	{}
+	double operator()(double money, int year)
+	{
+		return money * _rate * year;
+	}
+private:
+	double _rate;
+};
+int main()
+{
+	// 函数对象
+	double rate = 0.49;
+	Rate r1(rate);
+	r1(10000, 2);
+	// lamber
+	auto r2 = [=](double monty, int year)->double{return monty*rate*year; };
+	r2(10000, 2);
+	return 0;
+}
