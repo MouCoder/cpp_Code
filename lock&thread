@@ -1,0 +1,45 @@
+#include <iostream>
+#include <mutex>
+#include <thread>
+#include <condition_variable>
+using namespace std;
+int main()
+{
+	//两个线程轮流打印，顺序打印1-100
+	int a = 1;
+	int b = 2;
+	bool flag = true;
+	//一个互斥锁
+	mutex mtx;
+	//一个条件变量
+	condition_variable cd;
+	//创建两个线程A和B
+	thread t1([&]{
+		while(a <= 100)
+		{
+			unique_lock<std::mutex> lck(mtx);
+			cd.wait(lck, [flag]{return flag; });
+			cout << a << " ";
+			a += 2;
+			flag = false;
+			cd.notify_one();
+		}
+	});
+
+	thread t2([&]{
+		while (b <= 100)
+		{
+			unique_lock<std::mutex> lck(mtx);
+			cd.wait(lck, [flag]{return !flag; });
+			cout << b << " ";
+			b += 2;
+			flag = true;
+			cd.notify_one();
+		}
+	});
+
+	t1.join();
+	t2.join();
+
+	return 0;
+}
