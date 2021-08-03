@@ -1,0 +1,156 @@
+#include <iostream>
+#include <vector>
+#include <stack>
+using namespace std;
+
+//左右指针
+int sort1(vector<int>& v,int left,int right)
+{
+    int key = right;
+    while(left < right)
+    {
+        //无论排升序还是降序都必须是左边先走
+        //也就是说，关键码在右边就左边先走，关键码在左边右边先走
+        //左边先走找大
+        while(left < right && v[left] <= v[key])
+        {
+            left++; 
+        }
+        //右边再走找小
+        while(left < right && v[right] >= v[key])
+        {
+            right--;
+        }
+        //左右交换
+        swap(v[left],v[right]); 
+    }
+    //交换
+    swap(v[right],v[key]);
+
+    return right;
+}
+
+//前后指针
+int sort2(vector<int>& v,int left,int right)
+{
+    //当cur小于key时prev++
+    //当cur大于key时，prev不变
+    //cur再次小于key时，cur和prev交换
+    //实际上，也就是让prev始终指向大的的时候就交换
+    
+    int cur = left;
+    int prev = cur-1;
+
+    while(cur <= right)
+    {
+        if(v[cur] <= v[right] && ++prev != cur)
+        {
+            swap(v[prev],v[cur]); 
+        }
+        cur++;
+    }
+
+    return prev;
+}
+
+//挖坑法
+int sort3(vector<int>& v,int left,int right)
+{
+    int flag = v[right];
+    while(left < right)
+    {
+        //左边走找比坑的位置大的元素
+        while(left < right && v[left] <= flag)
+        {
+            left++; 
+        }
+        //将左边的大值填到右边的小坑,左边形成新的坑
+        v[right] = v[left]; 
+        //右边走找比坑位置小的元素
+        while(left < right && v[right] >= flag)
+        {
+            right--;
+        }
+        //将右边的小值填到左边的大坑
+        v[left] = v[right];
+    }
+
+    //将flag填到坑位置
+    v[left] = flag;
+
+    return left;
+}
+
+//递归实现
+void QuickSort(vector<int>& v,int left,int right)
+{
+    //左右指针
+    /*if(left >= right)
+        return;
+    int index = sort1(v,left,right);
+    QuickSort(v,left,index-1);
+    QuickSort(v,index+1,right);*/
+
+    //前后指针
+    if(left >= right)
+        return ;
+
+    /*int index = sort2(v,left,right);
+    QuickSort(v,left,index-1);
+    QuickSort(v,index+1,right);*/
+
+    int index = sort3(v,left,right);
+    QuickSort(v,left,index-1);
+    QuickSort(v,index+1,right);
+}
+
+//非递归实现
+void QuickSort1(vector<int>& v)
+{
+    //存储索引的栈
+    stack<pair<int,int>> st;
+    //begin和end入栈
+    st.push(make_pair(0,v.size()-1));
+
+    //进行快排
+    while(!st.empty())
+    {
+        pair<int,int> p = st.top();
+        st.pop();
+        int index = sort1(v,p.first,p.second);
+        //左右部分索引继续入栈
+        if(index - 1 > p.first)
+            st.push(make_pair(p.first,index-1));
+        if(index + 1 < p.second)
+            st.push(make_pair(index+1,p.second));
+    }
+}
+
+int main()
+{
+    vector<int> v(15);
+    v = {1,9,2,4,0,6,8,2,5,3,4,6,8,34,25,8};
+
+    for(auto e:v)
+    {
+        cout<<e<<" ";
+    }
+    cout<<endl;
+
+    QuickSort(v,0,v.size()-1);
+    for(auto e:v)
+    {
+        cout<<e<<" ";
+    }
+    cout<<endl;
+    v = {1,9,2,4,0,6,8,2,5,3,4,6,8,34,25,8};
+
+    QuickSort1(v);
+    for(auto e:v)
+    {
+        cout<<e<<" ";
+    }
+    cout<<endl;
+
+    return 0;
+}
