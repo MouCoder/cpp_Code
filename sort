@@ -1,0 +1,377 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+//直接插入排序
+void DirectorSort(vector<int>& v)
+{
+    //思路：将第n个元素插入到前n-1个有序序列中
+    //时间复杂度：O(N)~O(N^2)
+    //稳定性：稳定
+    for(int i = 1;i < v.size();i++)
+    {
+        int j = i-1;
+        int tmp = v[i];
+        while(j >= 0)
+        {
+            if(v[j] > tmp)
+            {
+                v[j+1] = v[j];
+                j--;
+            }
+            else 
+            {
+                break;
+            }
+        }
+        v[j+1] = tmp;
+    }
+}
+
+//希尔排序
+void HillSort(vector<int>& v)
+{
+    //思路：以gap为间隔进行直接插入排序
+    //时间复杂度：O(N^1.3)~O(N^2)
+    //稳定性：不稳定
+    int gap = v.size();
+    while(gap > 1)
+    {
+        gap = gap/3+1;//gap以三倍缩小，为了保证最后一次GAP为1，加1
+        //直接插入排序
+        for(int i = 1;i < v.size();i++)
+        {
+            int j = i-gap;
+            int tmp = v[i];
+            while(j >= 0)
+            {
+                if(v[j] > tmp)
+                {
+                    v[j+gap] = v[j];
+                    j -= gap;
+                }
+                else 
+                {
+                    break;
+                }
+            }
+            v[j+gap] = tmp;
+        }
+    }
+}
+
+//选择排序
+void SelectSort(vector<int>& v)
+{
+    //思路：从n个元素选出最大的和第n个元素交换位置
+    //时间复杂度：O(N^2)
+    //稳定性：不稳定
+    
+    for(int i = 0;i < v.size()-1;i++)
+    {
+        int maxIndex = 0;
+        for(int j = 0;j < v.size()-i;j++)
+        {
+            if(v[j] > v[maxIndex])
+            {
+                maxIndex = j;
+            }
+        }
+
+        swap(v[maxIndex],v[v.size()-1-i]);
+    }
+}
+
+//冒泡排序
+void BubbleSort(vector<int>& v)
+{
+    //思路：两两比较，大的后移。一趟比较结束，最大的在最后
+    //世间复杂度：O(N^2)
+    //稳定性：稳定
+    for(int i = v.size() - 1;i > 0;i--)
+    {
+        for(int j = 1;j <= i;j++)
+        {
+            if(v[j-1] > v[j])
+            {
+                swap(v[j-1],v[j]);
+            }
+        }
+    }
+}
+
+//快速排序 - 左右指针
+int sort1(vector<int>& v,int left,int right)
+{
+    //思路：左边先走找大，右边再走找小，左右交换
+    //时间复杂度：O(NlogN),数据完全有序时时间复杂度为O(N^2)，数据完全逆序时时间复杂度为O(N)
+    //稳定性：不稳定
+    
+    int tmp = right;
+    while(left < right)
+    {
+        //左边先走找大
+        while(left < right && v[left] <= v[tmp])
+        {
+            left++;
+        }
+        //右边再走找小
+        while(left < right && v[right] >= v[tmp])
+        {
+            right--;
+        }
+        //左右交换
+        swap(v[left],v[right]);
+    }
+    //将tmp存在left位置
+    swap(v[left],v[tmp]);
+
+    return left;
+}
+void QuickSort1(vector<int>& v,int left,int right)
+{
+    if(left >= right)
+        return ;
+    int index = sort1(v,left,right);
+    QuickSort1(v,left,index-1);
+    QuickSort1(v,index,right);
+}
+
+//快速排序 - 前后指针
+int Sort2(vector<int>& v,int p1,int p2)
+{
+    //思路：cur < tmp,prev++,否则cur++
+    int cur = p1;
+    int prev = cur-1;
+    while(cur <= p2)
+    {
+        if(v[cur] <= v[p2] && ++prev != cur)
+        {
+            swap(v[cur],v[prev]);
+        }
+        cur++;
+    }
+
+    return prev;
+}
+void QuickSort2(vector<int>& v,int p1,int p2)
+{
+    if(p1 >= p2)
+        return;
+    int index = Sort2(v,p1,p2);
+    QuickSort2(v,p1,index-1);
+    QuickSort2(v,index,p2);
+}
+
+//快速排序 - 挖坑法
+int sort3(vector<int>& v,int left,int right)
+{
+    //思路：左边先走找大，填到右边的坑，右边再走找小填到左边的坑
+    int tmp = v[right];
+
+    while(left < right)
+    {
+        while(left < right && v[left] <= tmp)
+            left++;
+        //左边的值填入右边的坑
+        v[right] = v[left];
+        while(left < right && v[right] >= tmp)
+            right--;
+        //右边的值填入左边的坑
+        v[left] = v[right];
+    }
+    //tmp填入最后一个坑
+    v[left] = tmp;
+    return left;
+}
+void QuickSort3(vector<int>& v,int left,int right)
+{
+    if(left >= right)
+        return;
+    int index = sort3(v,left,right);
+    QuickSort3(v,left,index-1);
+    QuickSort3(v,index,right);
+}
+
+//堆排
+void AdjustDown(vector<int>& v,int root,int end)
+{
+    int child = root*2 + 1;
+    int parent = root;
+    
+    while(child <= end)
+    {
+        if(child+1 <= end && v[child+1] > v[child])
+            child++;
+
+        if(v[child] > v[parent])
+        {
+            swap(v[child],v[parent]);
+            //继续迭代
+            parent = child;
+            child = parent*2 + 1;
+        }
+        else 
+        {
+            break;
+        }
+    }
+}
+
+void HeapSort(vector<int>& v)
+{
+    //建大堆
+    for(int i = (v.size()-2)/2;i >= 0;i--)
+    {
+        AdjustDown(v,i,v.size()-1);
+    }
+
+    //堆排序
+    for(int i = 0;i < v.size()-1;i++)
+    {
+        swap(v[0],v[v.size()-1-i]);
+        AdjustDown(v,0,v.size()-2-i);
+    }
+}
+
+//归并排序
+void Merge(vector<int>& v,int begin1,int end1,int begin2,int end2)
+{
+    vector<int> tmp; 
+    int index = begin1;
+    while(begin1 <= end1 && begin2 <= end2)
+    {
+        if(v[begin1] < v[begin2])
+        {
+            tmp.push_back(v[begin1]);
+            begin1++;
+        }
+        else 
+        {
+            tmp.push_back(v[begin2]);
+            begin2++;
+        }
+    }
+
+    while(begin1 <= end1)
+    {
+        tmp.push_back(v[begin1]);
+        begin1++;
+    }
+    while(begin2 <= end2)
+    {
+        tmp.push_back(v[begin2]);
+        begin2++;
+    }
+
+    for(int i = 0;i < tmp.size();i++)
+    {
+        v[index] = tmp[i];
+        index++;
+    }
+}
+
+void MergeSort(vector<int>& v,int begin,int end)
+{
+    if(begin >= end)
+        return;
+    int index = (begin+end)/2;
+    MergeSort(v,begin,index);
+    MergeSort(v,index+1,end);
+
+    Merge(v,begin,index,index+1,end);
+}
+
+int main()
+{
+    vector<int> v(15);
+    v = {2,5,8,7,9,3,4,6,0,12,43,35,76,25,7};
+    cout<<"待排序序列：";
+    for(auto e:v)
+    {
+        cout<<e<<" ";
+    }
+    cout<<endl;
+
+    v = {2,5,8,7,9,3,4,6,0,12,43,35,76,25,7};
+    DirectorSort(v);
+    cout<<"直接插入排序：";
+    for(auto e:v)
+    {
+        cout<<e<<" ";
+    }
+    cout<<endl;
+
+    v = {2,5,8,7,9,3,4,6,0,12,43,35,76,25,7};
+    HillSort(v);
+    cout<<"希尔排序：";
+    for(auto e:v)
+    {
+        cout<<e<<" ";
+    }
+    cout<<endl;
+
+    v = {2,5,8,7,9,3,4,6,0,12,43,35,76,25,7};
+    SelectSort(v);
+    cout<<"选择排序：";
+    for(auto e:v)
+    {
+        cout<<e<<" ";
+    }
+    cout<<endl;
+
+    v = {2,5,8,7,9,3,4,6,0,12,43,35,76,25,7};
+    BubbleSort(v);
+    cout<<"冒泡排序：";
+    for(auto e:v)
+    {
+        cout<<e<<" ";
+    }
+    cout<<endl;
+
+    v = {2,5,8,7,9,3,4,6,0,12,43,35,76,25,7};
+    QuickSort1(v,0,v.size()-1);
+    cout<<"左右指针：";
+    for(auto e:v)
+    {
+        cout<<e<<" ";
+    }
+    cout<<endl;
+
+    v = {2,5,8,7,9,3,4,6,0,12,43,35,76,25,7};
+    QuickSort2(v,0,v.size()-1);
+    cout<<"前后指针：";
+    for(auto e:v)
+    {
+        cout<<e<<" ";
+    }
+    cout<<endl;
+
+    v = {2,5,8,7,9,3,4,6,0,12,43,35,76,25,7};
+    QuickSort3(v,0,v.size()-1);
+    cout<<"挖坑法：";
+    for(auto e:v)
+    {
+        cout<<e<<" ";
+    }
+    cout<<endl;
+
+    v = {2,5,8,7,9,3,4,6,0,12,43,35,76,25,7};
+    HeapSort(v);
+    cout<<"堆排序：";
+    for(auto e:v)
+    {
+        cout<<e<<" ";
+    }
+    cout<<endl;
+
+    v = {2,5,8,7,9,3,4,6,0,12,43,35,76,25,7};
+    MergeSort(v,0,v.size()-1);
+    cout<<"归并排序：";
+    for(auto e:v)
+    {
+        cout<<e<<" ";
+    }
+    cout<<endl;
+    return 0;
+}
